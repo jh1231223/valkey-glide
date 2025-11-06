@@ -6,8 +6,7 @@ jobs:
   repro:
     runs-on: ubuntu-latest
     env:
-      # 打開你在測試中加的碰撞增幅器，讓失敗可重現
-      GLIDE_COLLISION_MODE: "1"
+      GLIDE_COLLISION_MODE: "1"   # 啟用碰撞增幅器
 
     steps:
       - name: Checkout code
@@ -22,7 +21,7 @@ jobs:
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      # 系統相依（protoc、編譯工具鏈）
+      # 系統相依（protoc + 編譯工具鏈）
       - name: Install system build deps
         run: |
           sudo apt-get update
@@ -34,14 +33,11 @@ jobs:
           set -eux
           python -m pip install -U pip wheel setuptools
           pip install -U maturin
-
-          # 1) 用發佈版帶入 glide_shared（含 protobuf 產物）
-          pip install valkey-glide
-
-          # 2) 從原始碼安裝 glide-async（會用到 rust + protoc）
+          # 安裝 glide-shared（提供 glide_shared.* 與其 protobuf 產物；需要 protoc）
+          pip install -e python/glide-shared
+          # 安裝 glide-async（需要 rust/maturin）
           pip install -e python/glide-async
-
-          # 3) 測試工具（--count 需要 pytest-repeat）
+          # 測試工具
           pip install pytest pytest-repeat
 
       - name: Run flaky test
