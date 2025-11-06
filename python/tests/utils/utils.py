@@ -1,3 +1,4 @@
+import os
 import json
 import random
 import string
@@ -162,6 +163,12 @@ def parse_info_response(res: Union[bytes, Dict[bytes, bytes]]) -> Dict[str, str]
 
 
 def get_random_string(length):
+    # 碰撞增幅模式：GLIDE_COLLISION_MODE=1 時啟用
+    if os.getenv("GLIDE_COLLISION_MODE") == "1":
+        alphabet = "abcd"          # 只有 4 個字
+        L = min(3, length)         # 最多取 3 碼
+        return "".join(random.choice(alphabet) for _ in range(L))
+    # 原本的行為
     result_str = "".join(random.choice(string.ascii_letters) for i in range(length))
     return result_str
 
