@@ -17,19 +17,21 @@ jobs:
         with:
           python-version: "3.12"
 
-      # 在 python 子資料夾安裝
+      # 安裝 monorepo 內的子套件：glide-shared 與 glide-async
       - name: Install dependencies
         working-directory: python
         run: |
           python -m pip install -U pip wheel setuptools
-          # 安裝套件本體（python/ 這個子專案）
-          pip install -e .
-          # 如果有開發需求檔就安裝；沒有也不會失敗
+          # 重點：分別安裝子專案（路徑依你的 repo 結構）
+          pip install -e glide-shared/python
+          pip install -e glide-async/python
+
+          # 若有開發依賴就裝，沒有也不會失敗
           test -f requirements-dev.txt && pip install -r requirements-dev.txt || true
-          # 測試必要工具：pytest + pytest-repeat（提供 --count）
+
+          # 測試需要的外掛
           pip install pytest pytest-repeat
 
-      # 在 python 子資料夾執行測試
       - name: Run flaky test
         working-directory: python
         run: |
