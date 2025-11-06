@@ -1,12 +1,13 @@
 name: Reproduce PUBSUB flake
 on:
-  workflow_dispatch:  # 允許手動按下「Run workflow」
+  workflow_dispatch:
 
 jobs:
   repro:
     runs-on: ubuntu-latest
     env:
-      GLIDE_COLLISION_MODE: "1"   # 開啟你的碰撞測試模式
+      GLIDE_COLLISION_MODE: "1"
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -16,19 +17,27 @@ jobs:
         with:
           python-version: "3.12"
 
+      # 在 python 子資料夾安裝
       - name: Install dependencies
+        working-directory: python
         run: |
-          python -m pip install -U pip wheel
-          pip install -e python
-          test -f python/requirements-dev.txt && pip install -r python/requirements-dev.txt || true
+          python -m pip install -U pip wheel setuptools
+          # 安裝套件本體（python/ 這個子專案）
+          pip install -e .
+          # 如果有開發需求檔就安裝；沒有也不會失敗
+          test -f requirements-dev.txt && pip install -r requirements-dev.txt || true
+          # 測試必要工具：pytest + pytest-repeat（提供 --count）
+          pip install pytest pytest-repeat
 
+      # 在 python 子資料夾執行測試
       - name: Run flaky test
+        working-directory: python
         run: |
           set -euxo pipefail
-          python -m pytest -c /dev/null -q \
+          python -m pytest -q \
             tests/async_tests/test_pubsub.py \
             -k "test_pubsub_exact_happy_path_many_channels" \
-            --count=200 -s --maxfail=1 | tee pytest-log.txt
+            --count=200 -s --maxfail=1 | tee ../pytest-log.txt
 
       - name: Upload pytest log
         if: always()
