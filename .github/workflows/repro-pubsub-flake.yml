@@ -6,7 +6,7 @@ jobs:
   repro:
     runs-on: ubuntu-latest
     env:
-      GLIDE_COLLISION_MODE: "1"   # 啟用碰撞增幅器
+      GLIDE_COLLISION_MODE: "1"
 
     steps:
       - name: Checkout code
@@ -17,11 +17,9 @@ jobs:
         with:
           python-version: "3.12"
 
-      # glide-async 需要 Rust/maturin
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      # 系統相依（protoc + 編譯工具鏈）
       - name: Install system build deps
         run: |
           sudo apt-get update
@@ -33,9 +31,9 @@ jobs:
           set -eux
           python -m pip install -U pip wheel setuptools
           pip install -U maturin
-          # 安裝 glide-shared（提供 glide_shared.* 與其 protobuf 產物；需要 protoc）
-          pip install -e python/glide-shared
-          # 安裝 glide-async（需要 rust/maturin）
+          # ✅ 用已發佈的 shared 套件（含 protobuf 產物）
+          pip install valkey-glide-shared
+          # 保留 async 從原始碼安裝（需要 rust/protoc）
           pip install -e python/glide-async
           # 測試工具
           pip install pytest pytest-repeat
