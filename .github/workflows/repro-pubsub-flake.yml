@@ -17,28 +17,32 @@ jobs:
         with:
           python-version: "3.12"
 
-      # 安裝 Rust（glide-async 需要）
+      # Rust toolchain for glide-async
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install dependencies
+      # 🔧 系統相依：protoc / 編譯工具
+      - name: Install system build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler pkg-config libssl-dev clang cmake
+          protoc --version
+
+      - name: Install Python deps (mono-repo packages)
         working-directory: python
         run: |
           set -eux
           python -m pip install -U pip wheel setuptools
-          # maturin 用來建置含 Rust 的 Python 套件
           pip install maturin
 
-          # 1) 安裝 glide-shared（根目錄有 pyproject.toml）
+          # 子套件
           pip install -e glide-shared
+          pip install -e glide-async   # 會觸發 rust/maturin，現在有 protoc 了
 
-          # 2) 安裝 glide-async（根目錄；會觸發 maturin/rust build）
-          pip install -e glide-async
-
-          # 3)（可選）若 python/ 本身也是一個套件
+          #（可選）若 python/ 本身有 pyproject.toml
           test -f pyproject.toml && pip install -e . || true
 
-          # 測試工具（--count 需要 pytest-repeat）
+          # 測試工具
           pip install pytest pytest-repeat
 
       - name: Run flaky test
