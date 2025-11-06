@@ -6,7 +6,7 @@ jobs:
   repro:
     runs-on: ubuntu-latest
     env:
-      GLIDE_COLLISION_MODE: "1"
+      GLIDE_COLLISION_MODE: "1"   # 開啟碰撞增幅器
 
     steps:
       - name: Checkout code
@@ -17,11 +17,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Rust toolchain for glide-async
-      - name: Set up Rust toolchain
+      - name: Set up Rust toolchain (for glide-async)
         uses: dtolnay/rust-toolchain@stable
 
-      # 🔧 系統相依：protoc / 編譯工具
+      # 系統依賴：protoc + 編譯工具
       - name: Install system build deps
         run: |
           sudo apt-get update
@@ -29,19 +28,15 @@ jobs:
           protoc --version
 
       - name: Install Python deps (mono-repo packages)
-        working-directory: python
         run: |
           set -eux
           python -m pip install -U pip wheel setuptools
           pip install maturin
-
-          # 子套件
-          pip install -e glide-shared
-          pip install -e glide-async   # 會觸發 rust/maturin，現在有 protoc 了
-
-          #（可選）若 python/ 本身有 pyproject.toml
-          test -f pyproject.toml && pip install -e . || true
-
+          # 安裝子套件（注意路徑以 repo root 為準）
+          pip install -e python/glide-shared
+          pip install -e python/glide-async
+          # 若 python/ 本身也有 pyproject.toml，可順便裝；沒有就略過
+          test -f python/pyproject.toml && pip install -e python || true
           # 測試工具
           pip install pytest pytest-repeat
 
